@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+{% block title %} {{ article.header }}{% endblock %}
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('assets/css/reset.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('assets/css/styles.css') }}"/>
+{% endblock %}
+{% block headerJavascript %}
+    <script>
+        var articleId = {{ article.id }};
+    </script>
+    <script src="{{ asset('assets/js/scroll.js') }}"></script>
+{% endblock %}
+{% block body %}
+
+    {{ include('/elements/header.html.twig') }}
+
+    <main>
+        <div class="article">
+            <div class="article-info">
+                <h1 class="title">{{ article.header }}</h1>
+            </div>
+            <div class="article-top-bar">
+                <div class="bar-left">
+                    <span><h4 class="author">By {{ article.firstName }} {{ article.lastName }}</h4></span>
+                    <h4 class="date">| {{ article.dateAdd|date }} · 6 min</h4>
+                </div>
+            </div>
+            <div class="article-content">
+                <p class="article-text">
+                    {{ article.text }}
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <input id="replyUsername" type="text" placeholder="Your name">
+    <div id="comments-container"></div>
+
+{% endblock %}
+{% block documentJavascript %}
+    <script>
+        var commentsSettings = {
+            profilePictureURL: null,
+            currentUserId: 0,
+            youText: 'Anonymous user',
+            roundProfilePictures: true,
+            textareaRows: 1,
+            enableAttachments: false,
+            enableHashtags: false,
+            enablePinging: false,
+            enableNavigation: true,
+            enableEditing: false,
+            enableUpvoting: false,
+            enableDeleting: false,
+            enableReplying: true,
+            enableDeletingCommentWithReplies: false,
+            maxRepliesVisible: 2,
+            defaultNavigationSortKey: 'newest',
+            scrollContainer: $(window),
+            fieldMappings: {
+                id: 'id',
+                parent: 'parentId',
+                created: 'dateAdd',
+                modified: 'dateUpd',
+                content: 'text',
+                attachments: null,
+                pings: null,
+                creator: null,
+                fullname: 'firstname',
+                profilePictureURL: null,
+                isNew: null,
+                createdByAdmin: null,
+                createdByCurrentUser: null,
+                upvoteCount: null,
+                userHasUpvoted: null
+            },
+            getComments: function (success, error) {
+                $.ajax({
+                    method: 'get',
+                    url: '{{ path('app_api_article_comments_get') }}',
+                    data: {
+                        id: articleId
+                    },
+                    success: function (commentsArray) {
+                        success(commentsArray)
+                    },
+                    error: function () {
+                        alert('Cannot add comment, try again later');
+                    }
+                });
+            },
+            postComment: function (data, success, error) {
+                var replyUserName = $('#replyUsername').val().trim();
+
+                if (replyUserName.length === 0) {
+                    replyUserName = data.firstname;
+                }
+
+                if (replyUserName.length > 0) {
+                    data.firstname = replyUserName;
+                }
+
+                if (data.parentId !== null) {
+                    if (data.parentId.indexOf('c') !== -1) {
+                        data.parentId = data.parentId.replace('c', '');
+                    }
+                }
+
+                $.ajax({
+                    method: 'post',
+                    url: '{{ path('app_api_comment_add') }}',
+                    data: {
+                        firstName: replyUserName,
+                        commentText: data.text,
+                        parentId: data.parentId,
+                    },
+                    success: function () {
+                        success(data)
+                    },
+                    error: function () {
+                        alert('Cannot add comment, try again later');
+                    }
+                });
+            },
+        };
+    </script>
+    {{ include('elements/comment/js/comments.js.html.twig') }}
+{% endblock %}

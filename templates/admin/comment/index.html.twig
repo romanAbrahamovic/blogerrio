@@ -1,0 +1,123 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Comments{% endblock %}
+
+{% block body %}
+
+    <a href="{{ path('homepage') }}">Back to homepage</a> | <a href="{{ path('app_admin_logout') }}">Logout</a>
+
+    <div id="comments-container"></div>
+
+{% endblock %}
+{% block documentJavascript %}
+    <script>
+        var commentsSettings = {
+            profilePictureURL: null,
+            currentUserId: 0,
+            currentUserIsAdmin: true,
+            youText: 'Administrator',
+            roundProfilePictures: true,
+            textareaRows: 1,
+            enableAttachments: false,
+            enableHashtags: false,
+            enablePinging: false,
+            enableNavigation: true,
+            enableEditing: true,
+            enableUpvoting: false,
+            enableDeleting: true,
+            enableReplying: true,
+            enableDeletingCommentWithReplies: true,
+            maxRepliesVisible: 2,
+            defaultNavigationSortKey: 'newest',
+            scrollContainer: $(window),
+            fieldMappings: {
+                id: 'id',
+                parent: 'parentId',
+                created: 'dateAdd',
+                modified: 'dateUpd',
+                content: 'text',
+                attachments: null,
+                pings: null,
+                creator: null,
+                fullname: 'firstname',
+                profilePictureURL: null,
+                isNew: null,
+                createdByAdmin: null,
+                createdByCurrentUser: null,
+                upvoteCount: null,
+                userHasUpvoted: null
+            },
+
+            getComments: function (success, error) {
+                $.ajax({
+                    method: 'get',
+                    url: '{{ path('app_api_comment_get') }}',
+                    success: function (commentsArray) {
+                        success(commentsArray)
+                    },
+                    error: function () {
+                        alert('Cannot add comment, try again later');
+                    }
+                });
+            },
+
+            postComment: function (data, success, error) {
+                if (data.parentId !== null) {
+                    if (data.parentId.indexOf('c') !== -1) {
+                        data.parentId = data.parentId.replace('c', '');
+                    }
+                }
+
+                $.ajax({
+                    method: 'post',
+                    url: '{{ path('app_api_comment_add') }}',
+                    data: {
+                        commentText: data.text,
+                        parentId: data.parentId,
+                        firstName: data.firstname
+                    },
+                    success: function () {
+                        success(data)
+                    },
+                    error: function () {
+                        alert('Cannot add comment, try again later');
+                    }
+                });
+            },
+
+            putComment: function(data, success, error) {
+                $.ajax({
+                    method: 'post',
+                    url: '{{ path('app_api_comment_edit') }}',
+                    data: {
+                        commentText: data.text,
+                        commentId: data.id,
+                    },
+                    success: function () {
+                        success(data)
+                    },
+                    error: function () {
+                        alert('Cannot add comment, try again later');
+                    }
+                });
+            },
+
+            deleteComment: function(data, success, error) {
+                $.ajax({
+                    method: 'delete',
+                    url: '{{ path('app_api_comment_delete') }}',
+                    data: {
+                        commentId: data.id,
+                    },
+                    success: function () {
+                        success(data)
+                    },
+                    error: function () {
+                        alert('Cannot delete comment, try again later');
+                    }
+                });
+            },
+        };
+    </script>
+    {{ include('elements/comment/js/comments.js.html.twig') }}
+{% endblock %}
